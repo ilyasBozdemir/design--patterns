@@ -1,0 +1,55 @@
+# Visual Studio'i yedek dosyaları
+*.[Bb]ak
+*.[Oo]ld
+*.[Bb]ak [Uu]p
+*.[Cc]ache
+*.[Ll]og
+*.log
+*.vspscc
+*.vsp
+*.pidb
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+
+# Resharper
+_ReSharper*/
+
+# Resharper kurulum dosyaları
+*.resharper
+*.ReSharper*/
+*.sln.DotSettings.user
+
+# ReSharper 4.x or earlier
+_ReSharper*/
+
+# Test dosyaları
+[Dd]ebug*/
+[Rr]elease*/
+x64/
+x86/
+[Bb]in/
+[Oo]bj/
+[Rr]efresh*/ 
+
+# Kullanılmayan öğeler
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# Npm öğeleri
+node_modules/
+
+# Package dosyaları
+*.nupkg
+*.pkl
+*.dll
+*.exe
+
+# VS Code dosyaları
+.vscode/
+
+# Visual Studio IDE files
+.vs/
+
+# Diğer istenmeyen dosyalar ve klasörler
