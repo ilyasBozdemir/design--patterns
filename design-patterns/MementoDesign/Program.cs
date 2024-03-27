@@ -1,4 +1,6 @@
 ﻿// Memento nesnesi - Oyun durumunu temsil eder
+using System.Text.RegularExpressions;
+
 public class ChessMemento
 {
     public string FenString { get; }
@@ -25,13 +27,15 @@ public class ChessCaretaker
     public void PrintMementos()
     {
         Console.WriteLine();
-        Console.WriteLine("Geçmiş Hamleler:");
+        if (Mementos.Count > 0)
+            Console.WriteLine("Geçmiş Hamleler:");
+        else
+            Console.WriteLine("Hiç Hamle Yapmadınız");
+
         foreach (var memento in Mementos)
             Console.WriteLine(memento.FenString);
         Console.WriteLine();
     }
-
-
 }
 
 // Originator sınıfı - Oyun durumunu yönetir
@@ -39,11 +43,17 @@ public class ChessGame
 {
     private string fenString;
     private ChessCaretaker caretaker;
+    private string _startFenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
 
     public ChessGame()
     {
-        this.fenString = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR";
+        this.fenString = _startFenString;
         this.caretaker = new ChessCaretaker();
+    }
+
+    public ChessMemento Save()
+    {
+        return new ChessMemento(fenString);
     }
 
     public void SetPosition(string fenString)
@@ -85,106 +95,90 @@ public class ChessGame
         if (caretaker.Mementos.Count > 0)
         {
             this.Restore(caretaker.Mementos.Peek());
-            Console.WriteLine($"{numMoves} hamle geri alındı. Yeni pozisyon: {this.GetPosition()}");
+
+            Console.WriteLine(
+                $"{numMoves} hamle geri alındı. Mevcut pozisyon: {this.GetPosition()}"
+            );
         }
         else
         {
-            Console.WriteLine($"{numMoves} hamle geri alındı. Yeni pozisyon: Başlangıç pozisyonu");
+            Console.WriteLine(
+                $"{numMoves} hamle geri alındı. Mevcut pozisyon: Başlangıç pozisyonu"
+            );
+        }
+    }
+
+
+    public void DrawChessboard(string fen)
+    {
+        string[] rows = Regex.Split(fen, @"(?<=\d)(?=[a-zA-Z])");
+
+        foreach (string row in rows)
+        {
+            int column = 1;
+            foreach (char c in row)
+            {
+                if (char.IsDigit(c))
+                {
+                    int emptySpaces = int.Parse(c.ToString());
+                    for (int j = 0; j < emptySpaces; j++)
+                    {
+                        Console.Write(". ");
+                        column++;
+                    }
+                }
+                else
+                {
+                    Console.Write(c + " ");
+                    column++;
+                }
+            }
+
+            Console.WriteLine();
         }
     }
 }
 
 class Program
 {
+    private static ChessGame _game;
+    private static ChessCaretaker _caretaker;
+
     static void Main(string[] args)
     {
-        string board =
-            @"
-            r n b q k b n r
-            p p p p p p p p
-            . . . . . . . .
-            . . . . . . . .
-            . . . . . . . .
-            . . . . . . . .
-            P P P P P P P P
-            R N B Q K B N R
-            ";
+        _game = new ChessGame();
+        _caretaker = _game.GetCaretaker();
 
-        string info =
-            @"
-                  
-            Burada her bir harf bir satranç taşı temsil eder:
-            Büyük harfler beyaz taşları, küçük harfler siyah taşları temsil eder.
-            r: siyah kale (rook)
-            n: siyah at (knight)
-            b: siyah fil (bishop)
-            q: siyah vezir (queen)
-            k: siyah şah (king)
-            p: siyah piyon (pawn)
-            aynı şekilde büyük harfler beyaz taşları temsil eder.
-            Noktalı alanlar boş kareleri temsil eder.
+        List<string> FenList = new List<string>();
+        FenList.Add(_game.GetPosition());
+        FenList.Add("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR"); 
+        FenList.Add("rnbqkbnr/ppp1pppp/3p4/8/4P3/8/PPPP1PPP/RNBQKBNR");
+        FenList.Add("rnbqkbnr/ppp1pppp/3p4/1B6/4P3/8/PPPP1PPP/RNBQK1NR");
+        FenList.Add("rnbqkbnr/pp2pppp/2pp4/1B6/4P3/8/PPPP1PPP/RNBQK1NR");
+        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/8/PPPP1PPP/RNBQK1NR");
+        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/5N2/PPPP1PPP/RNBQK2R");
+        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/3P1N2/PPP2PPP/RNBQK2R");
+        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/1P1P1N2/P1P2PPP/RNBQK2R");
+        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3PB2/1P1P1N2/P1P2PPP/RN1QK2R");
 
-            ";
-
-        Console.ForegroundColor = ConsoleColor.Green;
-        Console.WriteLine(board);
-        Console.ForegroundColor = ConsoleColor.DarkBlue;
-        Console.WriteLine(info);
-        Console.ForegroundColor = ConsoleColor.Gray;
-
-        // Başlangıç durumu
-        ChessGame game = new ChessGame();
-        Console.WriteLine(game.GetPosition());
+        for (int i = 0; i < FenList.Count; i++)
+        {
+            _game.SetPosition($"{FenList[i]}");
+            _caretaker.Mementos.Push(_game.Save());
+        }
 
 
-        // Geri alma mekanizması için caretaker oluştur
-        ChessCaretaker caretaker = game.GetCaretaker();
 
-        // Hamle yap ve pozisyonu kaydet
-        game.SetPosition("rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR");
-        Console.WriteLine(game.GetPosition());
+        //_game.UndoMoves(3);
 
+        foreach (var memento in _caretaker.Mementos)
+        {
+           _game.DrawChessboard(memento.FenString);
+            Console.WriteLine();
+            Console.WriteLine("Fen Notasyonu : " + memento.FenString);
+            Console.WriteLine();
+        }
 
-        // İkinci hamle
-        game.SetPosition("rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/8/PPP2PPP/RNBQKBNR");
-        Console.WriteLine(game.GetPosition());
-
-
-        // Üçüncü hamle
-        game.SetPosition("rnbqkbnr/ppp2ppp/4p3/3p4/3PP3/4P3/PPP2PPP/RNBQKBNR");
-        Console.WriteLine(game.GetPosition());
-
-
-        // Dördüncü hamle
-        game.SetPosition("rnbqkbnr/ppp2ppp/4p3/3pP3/3P4/4P3/PPP2PPP/RNBQKBNR");
-        Console.WriteLine(game.GetPosition());
-
-
-        // Beşinci hamle
-        game.SetPosition("rnbqkbnr/ppp2ppp/4p3/3pP3/3P4/2N1P3/PPP2PPP/R1BQKBNR");
-        Console.WriteLine(game.GetPosition());
-
-
-        // Geçmiş hamleleri göster
-        caretaker.PrintMementos();
-
-
-        Console.WriteLine("Mementos  Count : " + caretaker.Mementos.Count);
-
-        game.UndoMoves(1);
-
-        Console.WriteLine("Mementos  Count : " + caretaker.Mementos.Count);
-
-        // Altıncı hamle
-        game.SetPosition("rnbqkbnr/ppp2ppp/4p3/3pP3/3P4/2N1P3/PPP2PPP/R1BQKBNR");
-        Console.WriteLine(game.GetPosition());
-
-
-        // Geçmiş hamleleri göster
-        caretaker.PrintMementos();
- 
-
-        Console.WriteLine("Mementos Count : " + caretaker.Mementos.Count);
         Console.ReadLine();
     }
 }
