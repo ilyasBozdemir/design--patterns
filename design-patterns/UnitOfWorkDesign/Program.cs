@@ -37,54 +37,31 @@ public class DbSet<T> where T : BaseEntity
         return _entities.AsQueryable();
     }
 
-    // Belirli bir varlığı ekle
-    public void Add(T entity)
+    public List<T> ToList()
     {
-        if (entity == null)
-        {
-            throw new ArgumentNullException(nameof(entity));
-        }
-        _entities.Add(entity);
-    }
-
-    // Belirli bir varlığı kaldır
-    public void Remove(T entity)
-    {
-        if (entity == null)
-        {
-            throw new ArgumentNullException(nameof(entity));
-        }
-        _entities.Remove(entity);
+        return _entities;
     }
 }
 
 
 public class MyDbContext
 {
-    private static MyDbContext _instance;
     private static readonly object _lock = new object();
-    public List<Customer> Customers { get; set; }
-    public List<Product> Products { get; set; }
+    private static MyDbContext _instance;
+ 
+    public List<Customer> Customers { get; set; }= new List<Customer>();    
 
+    public List<Product> Products { get; set; } = new List<Product>();
 
     public static MyDbContext GetInstance()
     {
-    
         lock (_lock)
         {
             if (_instance == null)
                 _instance = new MyDbContext();
-            
             return _instance;
         }
     }
-
-    public MyDbContext()
-    {
-        Customers = new List<Customer>();
-        Products = new List<Product>();
-    }
-
 
     public DbSet<T> Set<T>() where T : BaseEntity
     {
@@ -92,12 +69,6 @@ public class MyDbContext
     }
 }
 
-
-// Temel repository arabirimi
-public interface IBaseRepository<T> where T : BaseEntity
-{
-    List<T> Table { get; }
-}
 
 public interface IReadRepository<T> : IBaseRepository<T> where T : BaseEntity
 {
@@ -129,58 +100,86 @@ public interface IUnitOfWork : IDisposable
     IWriteRepository<T> GetWriteRepository<T>() where T : BaseEntity;
 }
 
-public class UnitOfWork : IUnitOfWork
+
+// Temel repository arabirimi
+public interface IBaseRepository<T> where T : BaseEntity
 {
-    public void Dispose()
+    List<T> Table { get; }
+
+}
+
+public class BaseRepository<T> : IBaseRepository<T> where T : BaseEntity
+{
+    protected readonly MyDbContext _dbContext;
+
+    public List<T> Table
     {
-        throw new NotImplementedException();
+        get
+        {
+            if (_dbContext == null)
+                throw new InvalidOperationException("MyDbContext has not been initialized.");
+
+            if (typeof(T) == typeof(Customer))
+                return _dbContext.Customers.Cast<T>().ToList();
+            else if (typeof(T) == typeof(Product))
+                return _dbContext.Products.Cast<T>().ToList();
+            else
+                throw new NotImplementedException("Table not implemented for this entity type.");
+        }
+        set
+        {
+            if (value == null)
+                throw new ArgumentNullException(nameof(value), "MyDbContext cannot be set to null.");
+
+            if (typeof(T) == typeof(Customer))
+            {
+                _dbContext.Customers.Clear();
+                _dbContext.Customers.AddRange(value.Cast<Customer>());
+            }
+            else if (typeof(T) == typeof(Product))
+            {
+                _dbContext.Products.Clear();
+                _dbContext.Products.AddRange(value.Cast<Product>());
+            }
+            else
+            {
+                throw new NotImplementedException("Table not implemented for this entity type.");
+            }
+        }
     }
 
-    public IReadRepository<T> GetReadRepository<T>() where T : BaseEntity
+    private DbSet<T> GetDbSet()
     {
-       return new ReadRepository<T>();
+        return _dbContext.Set<T>();
     }
 
-    public IWriteRepository<T> GetWriteRepository<T>() where T : BaseEntity
+    public BaseRepository()
     {
-        return new WriteRepository<T>();
+        _dbContext = MyDbContext.GetInstance();
     }
 }
 
 
-public class WriteRepository<T> : IWriteRepository<T> where T : BaseEntity
+public class WriteRepository<T> : BaseRepository<T>, IWriteRepository<T> where T : BaseEntity
 {
 
     private readonly MyDbContext _dbContext;
 
 
-    public List<T> Table => GetDbSet();
 
     public WriteRepository()
     {
-        _dbContext = new MyDbContext();
+        _dbContext = MyDbContext.GetInstance();
     }
 
-    private List<T> GetDbSet()
-    {
-        if (typeof(T) == typeof(Customer))
-            return _dbContext.Customers.Cast<T>().ToList();
-        
-        else if (typeof(T) == typeof(Product))
-            return _dbContext.Products.Cast<T>().ToList();
-        
 
-        else
-            throw new NotImplementedException("Table not implemented for this entity type");
-        
-    }
 
     public async Task<bool> AddAsync(T model)
     {
         try
         {
-            await Task.Delay(0); 
-            GetDbSet().Add(model);
+            await Task.Delay(0);
+            Table.Add(model);
             return true;
         }
         catch (Exception)
@@ -198,7 +197,7 @@ public class WriteRepository<T> : IWriteRepository<T> where T : BaseEntity
     {
         try
         {
-            GetDbSet().Remove(model);
+            Table.Remove(model);
             return true;
         }
         catch (Exception)
@@ -230,30 +229,14 @@ public class WriteRepository<T> : IWriteRepository<T> where T : BaseEntity
     }
 }
 
-public class ReadRepository<T> : IReadRepository<T> where T : BaseEntity
+
+public class ReadRepository<T> : BaseRepository<T>, IReadRepository<T> where T : BaseEntity
 {
     private readonly MyDbContext _dbContext;
-    public List<T> Table => GetDbSet();
-
-   
-    private List<T> GetDbSet()
-    {
-        if (typeof(T) == typeof(Customer))
-            return _dbContext.Customers.Cast<T>().ToList();
-
-        else if (typeof(T) == typeof(Product))
-            return _dbContext.Products.Cast<T>().ToList();
-
-
-        else
-            throw new NotImplementedException("Table not implemented for this entity type");
-
-    }
-
 
     public ReadRepository()
     {
-        _dbContext = new MyDbContext();
+        _dbContext = MyDbContext.GetInstance();
     }
 
     public IQueryable<T> GetAll(bool tracking = true)
@@ -278,18 +261,35 @@ public class ReadRepository<T> : IReadRepository<T> where T : BaseEntity
 }
 
 
+public class UnitOfWork : IUnitOfWork
+{
+    public void Dispose()
+    {
+
+    }
+
+    public IReadRepository<T> GetReadRepository<T>() where T : BaseEntity
+    {
+        return new ReadRepository<T>();
+    }
+
+    public IWriteRepository<T> GetWriteRepository<T>() where T : BaseEntity
+    {
+        return new WriteRepository<T>();
+    }
+}
+
 class Program
 {
     static void Main(string[] args)
     {
-        // => UnitOfWork ve Repository Pattern temsil eden yapı kullanılmıştır
+        // UnitOfWork ve Repository Pattern temsil eden yapı kullanılmıştır
+
 
         IUnitOfWork unitOfWork = new UnitOfWork();
 
-        var customerWriteRepository  = unitOfWork.GetWriteRepository<Customer>();
-        var customerReadRepository  = unitOfWork.GetReadRepository<Customer>();
-
-
+        var customerWriteRepository = unitOfWork.GetWriteRepository<Customer>();
+        var customerReadRepository = unitOfWork.GetReadRepository<Customer>();
 
         customerWriteRepository.AddAsync(new Customer { Id = 1, Email = "ib@gmail.com", Name = "ilyas" });
 
@@ -297,9 +297,12 @@ class Program
         var customerList = customerReadRepository.GetAll();
 
         foreach (var item in customerList)
-        {
             Console.WriteLine(item);
-        }
+        
+
+        Console.WriteLine();
+
+        Console.ReadLine();
 
     }
 }
