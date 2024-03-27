@@ -1,6 +1,4 @@
-﻿
-
-public enum ServiceLifetime
+﻿public enum ServiceLifetime
 {
     Transient,
     //Scoped,
@@ -16,7 +14,7 @@ public interface IService
 
 
 // Servis sınıfı
-public class Service : IService
+public class ServiceA : IService
 {
     public void PerformAction()
     {
@@ -24,6 +22,13 @@ public class Service : IService
     }
 }
 
+public class ServiceB : IService
+{
+    public void PerformAction()
+    {
+        Console.WriteLine("Performing action...");
+    }
+}
 
 public class DIContainer
 {
@@ -77,15 +82,14 @@ public class DIContainer
                 return instance;
             }
         }
-        else
+        else //Transient
         {
             return new TImplementation();
         }
+       
     }
 
 }
-
-
 
 class Program
 {
@@ -94,21 +98,29 @@ class Program
         var container = new DIContainer();
 
         // Transient lifetime için
-        container.Register<IService, Service>(ServiceLifetime.Transient);
-
+        container.Register<IService, ServiceA>(ServiceLifetime.Transient);
 
         var service1 = container.Resolve<IService>();
         var service2 = container.Resolve<IService>();
-        Console.WriteLine(ReferenceEquals(service1, service2)); // false
 
 
-        container = new DIContainer();
+        var container2 = new DIContainer();
+
 
         // Singleton lifetime için
-        container.Register<IService, Service>(ServiceLifetime.Singleton);
-        var service3 = container.Resolve<IService>();
-        var service4 = container.Resolve<IService>();
-        Console.WriteLine(ReferenceEquals(service3, service4)); // true
+        container2.Register<IService, ServiceB>(ServiceLifetime.Singleton);
+        var service3 = container2.Resolve<IService>();
+        var service4 = container2.Resolve<IService>();
+
+        bool state = ReferenceEquals(service1, service2),
+            state2 = ReferenceEquals(service3, service4);
+
+        Console.ForegroundColor = ConsoleColor.Green;
+
+        Console.WriteLine($"Hizmet Yaşam Döngüsü :Transient(Geçici) = {state}"); 
+        Console.WriteLine($"Hizmet Yaşam Döngüsü :Singleton(Tekil) = {state2}");
+        Console.ResetColor();
+        Console.ReadLine();
 
     }
 }
