@@ -1,6 +1,4 @@
 ﻿// Memento nesnesi - Oyun durumunu temsil eder
-using System.Text.RegularExpressions;
-
 public class ChessMemento
 {
     public string FenString { get; }
@@ -109,13 +107,16 @@ public class ChessGame
     }
 
 
-    public void DrawChessboard(string fen)
+    public void DrawChessboard(string fenString)
     {
-        string[] rows = Regex.Split(fen, @"(?<=\d)(?=[a-zA-Z])");
 
-        foreach (string row in rows)
+        string[] rows = fenString.Split('/');
+
+        for (int i = 0; i < rows.Length; i++)
         {
+            string row = rows[i];
             int column = 1;
+
             foreach (char c in row)
             {
                 if (char.IsDigit(c))
@@ -146,20 +147,23 @@ class Program
 
     static void Main(string[] args)
     {
+
+        
         _game = new ChessGame();
         _caretaker = _game.GetCaretaker();
 
+        // Burda en başta ki Stacke eklenince en son oluyor.
+
         List<string> FenList = new List<string>();
-        FenList.Add(_game.GetPosition());
         FenList.Add("rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR"); 
         FenList.Add("rnbqkbnr/ppp1pppp/3p4/8/4P3/8/PPPP1PPP/RNBQKBNR");
         FenList.Add("rnbqkbnr/ppp1pppp/3p4/1B6/4P3/8/PPPP1PPP/RNBQK1NR");
-        FenList.Add("rnbqkbnr/pp2pppp/2pp4/1B6/4P3/8/PPPP1PPP/RNBQK1NR");
-        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/8/PPPP1PPP/RNBQK1NR");
-        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/5N2/PPPP1PPP/RNBQK2R");
-        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/3P1N2/PPP2PPP/RNBQK2R");
-        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/1P1P1N2/P1P2PPP/RNBQK2R");
-        FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3PB2/1P1P1N2/P1P2PPP/RN1QK2R");
+        //FenList.Add("rnbqkbnr/pp2pppp/2pp4/1B6/4P3/8/PPPP1PPP/RNBQK1NR");
+        //FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/8/PPPP1PPP/RNBQK1NR");
+        //FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/5N2/PPPP1PPP/RNBQK2R");
+        //FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/3P1N2/PPP2PPP/RNBQK2R");
+        //FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3P3/1P1P1N2/P1P2PPP/RNBQK2R");
+        //FenList.Add("rnbqkbnr/pp2pppp/2pp4/8/B3PB2/1P1P1N2/P1P2PPP/RN1QK2R");
 
         for (int i = 0; i < FenList.Count; i++)
         {
@@ -169,15 +173,18 @@ class Program
 
 
 
-        //_game.UndoMoves(3);
+        _game.UndoMoves(3);
 
         foreach (var memento in _caretaker.Mementos)
         {
-           _game.DrawChessboard(memento.FenString);
+            _game.DrawChessboard(memento.FenString);
             Console.WriteLine();
             Console.WriteLine("Fen Notasyonu : " + memento.FenString);
             Console.WriteLine();
         }
+
+
+
 
         Console.ReadLine();
     }
