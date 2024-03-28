@@ -58,7 +58,7 @@ class RobotFactory
                     _robots.Add("large", robot);
                     break;
                 default:
-                    throw new ArgumentException("Geçersiz robot tipi.");
+                    throw new ArgumentException($"{robotType} robot Oluşturulamadı.");
             }
         }
         return robot;
@@ -69,21 +69,38 @@ class Program
 {
     static void Main(string[] args)
     {
-        RobotFactory factory = new RobotFactory();
 
-        IRobot smallRobot1 = factory.GetRobotFromFactory("small");
-        smallRobot1.Print();
+        try
+        {
+            RobotFactory factory = new RobotFactory();
 
-        IRobot smallRobot2 = factory.GetRobotFromFactory("small");
-        smallRobot2.Print();
+            IRobot smallRobot1 = factory.GetRobotFromFactory("small");
+            smallRobot1.Print();
 
-        IRobot largeRobot1 = factory.GetRobotFromFactory("large");
-        largeRobot1.Print();
+            IRobot smallRobot2 = factory.GetRobotFromFactory("small");
+            smallRobot2.Print();
 
-        IRobot largeRobot2 = factory.GetRobotFromFactory("large");
-        largeRobot2.Print();
+            IRobot largeRobot1 = factory.GetRobotFromFactory("large");
+            largeRobot1.Print();
 
-        // Fabrikadan oluşturulan toplam nesne sayısı
-        Console.WriteLine("Toplam nesne sayısı: " + factory.TotalObjectsCreated);
+            IRobot largeRobot2 = factory.GetRobotFromFactory("large");
+            largeRobot2.Print();
+
+
+            IRobot mediumRobot1 = factory.GetRobotFromFactory("medium");
+            mediumRobot1.Print();
+
+            IRobot mediumRobot2 = factory.GetRobotFromFactory("medium");
+            mediumRobot1.Print();
+
+
+            // Fabrikadan oluşturulan toplam nesne sayısı
+            Console.WriteLine("Toplam nesne sayısı: " + factory.TotalObjectsCreated);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine("Hata: " + e.Message);
+        }
+        
     }
 }
