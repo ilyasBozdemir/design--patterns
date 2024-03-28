@@ -73,13 +73,18 @@ class Program
 
         account.Deposit(1000);
         account.Withdraw(500);
-        account.Withdraw(800); // Yetersiz bakiye, işlem gerçekleşmez
+        account.Withdraw(501); // Yetersiz bakiye, işlem gerçekleşmez
 
         // Hesap geçmişi görüntülenir
         Console.WriteLine("\nHesap Geçmişi:");
         foreach (var @event in eventStore.GetEvents())
         {
+            if (@event.Amount>0)
+                Console.ForegroundColor = ConsoleColor.Green;
+            else
+                Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine($"[{@event.Timestamp}] {@event.Amount}");
+            Console.ForegroundColor = ConsoleColor.Gray;
         }
 
        
