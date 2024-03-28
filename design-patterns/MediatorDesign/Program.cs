@@ -1,75 +1,104 @@
-﻿using System;
-using System.Collections.Generic;
+﻿// Event Sourcing ve Mediator deseni
 
-// Arabirim tanımlayıcı: ChatRoom
-interface IChatRoom
+// Event sınıfı
+class MessageSentEvent
 {
-    void SendMessage(string sender, string message);
-    void RegisterUser(User user);
-}
+    public string Sender { get; }
+    public string Receiver { get; }
+    public string Message { get; }
+    public DateTime Timestamp { get; }
 
-// Mediator sınıfı: Concrete Mediator
-class ChatRoom : IChatRoom
-{
-    private Dictionary<string, User> _users = new Dictionary<string, User>();
-
-    public void RegisterUser(User user)
+    public MessageSentEvent(string sender, string receiver, string message)
     {
-        _users[user.Name] = user;
-    }
-
-    public void SendMessage(string sender, string message)
-    {
-        foreach (var user in _users.Values)
-        {
-            if (user.Name != sender) // Kendi kendine mesaj gönderme
-            {
-                user.ReceiveMessage(sender, message);
-            }
-        }
+        Sender = sender;
+        Receiver = receiver;
+        Message = message;
+        Timestamp = DateTime.UtcNow;
     }
 }
 
-// Katılımcı sınıfı: Colleague
+// Event kaydedici
+class EventStore
+{
+    private List<MessageSentEvent> _events = new List<MessageSentEvent>();
+
+    public void RecordEvent(MessageSentEvent @event)
+    {
+        _events.Add(@event);
+    }
+
+    public IEnumerable<MessageSentEvent> GetEvents()
+    {
+        return _events;
+    }
+}
+
+// Mediator arayüzü
+interface IChatMediator
+{
+    void SendMessage(string sender, string receiver, string message);
+}
+
+// Concrete Mediator
+class ChatMediator : IChatMediator
+{
+    private EventStore _eventStore;
+
+    public ChatMediator(EventStore eventStore)
+    {
+        _eventStore = eventStore;
+    }
+
+    public void SendMessage(string sender, string receiver, string message)
+    {
+        // Mesaj gönderildiğinde event oluşturulur ve kaydedilir
+        var @event = new MessageSentEvent(sender, receiver, message);
+        _eventStore.RecordEvent(@event);
+
+        Console.WriteLine($"[{sender}]: {message} -> [{receiver}]");
+    }
+}
+
+// Kullanıcı sınıfı
 class User
 {
-    public string Name { get; }
+    private string _name;
+    private IChatMediator _mediator;
 
-    public User(string name)
+    public User(string name, IChatMediator mediator)
     {
-        Name = name;
+        _name = name;
+        _mediator = mediator;
     }
 
-    public void SendMessage(IChatRoom chatRoom, string message)
+    public void SendMessage(string receiver, string message)
     {
-        chatRoom.SendMessage(Name, message);
-    }
-
-    public void ReceiveMessage(string sender, string message)
-    {
-        Console.WriteLine($"{Name} receives message from {sender}: {message}");
+        _mediator.SendMessage(_name, receiver, message);
     }
 }
 
+// Uygulama
 class Program
 {
     static void Main(string[] args)
     {
-        // Mediator oluştur
-        IChatRoom chatRoom = new ChatRoom();
+        // Event store oluşturulur
+        EventStore eventStore = new EventStore();
 
-        // Kullanıcıları oluştur ve mediator'e kaydet
-        User user1 = new User("User 1");
-        User user2 = new User("User 2");
-        User user3 = new User("User 3");
+        // Mediator oluşturulur ve kullanıcılara atanır
+        IChatMediator mediator = new ChatMediator(eventStore);
+        User alice = new User("Alice", mediator);
+        User bob = new User("Bob", mediator);
 
-        chatRoom.RegisterUser(user1);
-        chatRoom.RegisterUser(user2);
-        chatRoom.RegisterUser(user3);
+        // Mesajlar gönderilir
+        alice.SendMessage("Bob", "Merhaba Bob!");
+        bob.SendMessage("Alice", "Merhaba Alice!");
 
-        // Kullanıcılar arasında iletişim kur
-        user1.SendMessage(chatRoom, "Hello everyone!");
-        user2.SendMessage(chatRoom, "Hi there!");
-        user3.SendMessage(chatRoom, "Hey!");
+        // Event store'daki event'ler gösterilir
+        Console.WriteLine("\nEvent Log:");
+        foreach (var @event in eventStore.GetEvents())
+        {
+            Console.WriteLine($"[{@event.Timestamp}] {@event.Sender} -> {@event.Receiver}: '{@event.Message}'");
+        }
     }
 }

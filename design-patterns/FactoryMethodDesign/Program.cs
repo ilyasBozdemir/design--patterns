@@ -1,42 +1,87 @@
 ﻿using System;
 
-// Ürün arayüzü
-interface IProduct
+// Üst sınıf: Belge arayüzü
+interface IDocument
 {
-    void Operate();
+    void Open();
+    void Close();
 }
 
-// Concrete Product sınıfları
-class ConcreteProductA : IProduct
+// Concrete Product 1: WordBelgesi
+class WordDocument : IDocument
 {
-    public void Operate()
+    public void Open()
     {
-        Console.WriteLine("Concrete Product A işlem yapıyor.");
+        Console.WriteLine("Microsoft Word belgesi açılıyor...");
+    }
+
+    public void Close()
+    {
+        Console.WriteLine("Microsoft Word belgesi kapatılıyor...");
     }
 }
 
-class ConcreteProductB : IProduct
+// Concrete Product 2: ExcelBelgesi
+class ExcelDocument : IDocument
 {
-    public void Operate()
+    public void Open()
     {
-        Console.WriteLine("Concrete Product B işlem yapıyor.");
+        Console.WriteLine("Microsoft Excel belgesi açılıyor...");
+    }
+
+    public void Close()
+    {
+        Console.WriteLine("Microsoft Excel belgesi kapatılıyor...");
     }
 }
 
-// Creator (Factory) sınıfı
-class Creator
+// Creator: Abstract class
+abstract class DocumentCreator
 {
-    public IProduct FactoryMethod(string type)
+    public abstract IDocument CreateDocument();
+}
+
+// Concrete Creator 1: WordBelgesiYaratici
+class WordDocumentCreator : DocumentCreator
+{
+    public override IDocument CreateDocument()
     {
-        switch (type)
+        return new WordDocument();
+    }
+}
+
+// Concrete Creator 2: ExcelBelgesiYaratici
+class ExcelDocumentCreator : DocumentCreator
+{
+    public override IDocument CreateDocument()
+    {
+        return new ExcelDocument();
+    }
+}
+
+// Kullanıcıdan alınan bilgiye göre belge oluşturan sınıf
+class DocumentManager
+{
+    public IDocument CreateDocument(string documentType)
+    {
+        DocumentCreator creator;
+
+        // Kullanıcı girdisine göre uygun belge yaratıcıyı seç
+        if (documentType == "Word")
         {
-            case "A":
-                return new ConcreteProductA();
-            case "B":
-                return new ConcreteProductB();
-            default:
-                throw new ArgumentException("Geçersiz ürün tipi.");
+            creator = new WordDocumentCreator();
         }
+        else if (documentType == "Excel")
+        {
+            creator = new ExcelDocumentCreator();
+        }
+        else
+        {
+            throw new ArgumentException("Geçersiz belge türü.");
+        }
+
+        // Belge yaratıcı üzerinden belge oluştur
+        return creator.CreateDocument();
     }
 }
 
@@ -44,15 +89,16 @@ class Program
 {
     static void Main(string[] args)
     {
-        // Creator nesnesi oluştur
-        Creator creator = new Creator();
+        DocumentManager manager = new DocumentManager();
 
-        // Product A oluştur ve çalıştır
-        IProduct productA = creator.FactoryMethod("A");
-        productA.Operate();
+        Console.WriteLine("Hangi belge türünü oluşturmak istiyorsunuz? (Word/Excel)");
+        string documentType = Console.ReadLine();
 
-        // Product B oluştur ve çalıştır
-        IProduct productB = creator.FactoryMethod("B");
-        productB.Operate();
+        // Kullanıcı girdisine göre belge oluştur
+        IDocument document = manager.CreateDocument(documentType);
+
+        // Belgeyi aç ve kapat
+        document.Open();
+        document.Close();
     }
 }

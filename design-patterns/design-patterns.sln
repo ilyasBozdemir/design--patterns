@@ -59,6 +59,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ServiceLayerDesign", "Servi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CQRSDesign", "CQRSDesign\CQRSDesign.csproj", "{04D64CED-7A08-40A0-969F-B8CC8AABA7A8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcingDesign", "EventSourcingDesign\EventSourcingDesign.csproj", "{A1FFB267-DE5C-4AF6-975D-E13680E5923E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -177,6 +179,10 @@ Global
 		{04D64CED-7A08-40A0-969F-B8CC8AABA7A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{04D64CED-7A08-40A0-969F-B8CC8AABA7A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{04D64CED-7A08-40A0-969F-B8CC8AABA7A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A1FFB267-DE5C-4AF6-975D-E13680E5923E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A1FFB267-DE5C-4AF6-975D-E13680E5923E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A1FFB267-DE5C-4AF6-975D-E13680E5923E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A1FFB267-DE5C-4AF6-975D-E13680E5923E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
