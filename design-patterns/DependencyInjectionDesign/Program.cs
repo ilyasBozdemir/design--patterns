@@ -1,36 +1,38 @@
 ﻿public enum ServiceLifetime
 {
     Transient,
-    //Scoped,
     Singleton
 }
 
 
-// Servis arayüzü
-public interface IService
+public interface IServiceA
+{
+    void PerformAction();
+}
+public interface IServiceB
 {
     void PerformAction();
 }
 
 
-// Servis sınıfı
-public class ServiceA : IService
+public class ServiceA : IServiceA
 {
     public void PerformAction()
     {
-        Console.WriteLine("Performing action...");
+        Console.WriteLine("ServiceA Performing action...");
     }
 }
 
-public class ServiceB : IService
+public class ServiceB : IServiceB
 {
     public void PerformAction()
     {
-        Console.WriteLine("Performing action...");
+        Console.WriteLine("ServiceB Performing action...");
     }
 }
 
-public class DIContainer
+
+public class DIContainer // Dependency Injection Container
 {
     private readonly Dictionary<Type, (Func<object> factory, ServiceLifetime lifetime)> _serviceRegistrations =
           new Dictionary<Type, (Func<object> factory, ServiceLifetime lifetime)>();
@@ -97,30 +99,28 @@ class Program
     {
         var container = new DIContainer();
 
-        // Transient lifetime için
-        container.Register<IService, ServiceA>(ServiceLifetime.Transient);
+        // Singleton lifetime için ServiceA kaydı
+        container.Register<IServiceA, ServiceA>(ServiceLifetime.Singleton);
+        var serviceA1 = container.Resolve<IServiceA>();
+        var serviceA2 = container.Resolve<IServiceA>();
 
-        var service1 = container.Resolve<IService>();
-        var service2 = container.Resolve<IService>();
-
-
-        var container2 = new DIContainer();
-
-
-        // Singleton lifetime için
-        container2.Register<IService, ServiceB>(ServiceLifetime.Singleton);
-        var service3 = container2.Resolve<IService>();
-        var service4 = container2.Resolve<IService>();
-
-        bool state = ReferenceEquals(service1, service2),
-            state2 = ReferenceEquals(service3, service4);
+        // Transient lifetime için ServiceB kaydı
+        container.Register<IServiceB, ServiceB>(ServiceLifetime.Transient);
+        var serviceB1 = container.Resolve<IServiceB>();
+        var serviceB2 = container.Resolve<IServiceB>();
 
         Console.ForegroundColor = ConsoleColor.Green;
 
-        Console.WriteLine($"Hizmet Yaşam Döngüsü :Transient(Geçici) = {state}"); 
-        Console.WriteLine($"Hizmet Yaşam Döngüsü :Singleton(Tekil) = {state2}");
-        Console.ResetColor();
-        Console.ReadLine();
+        Console.WriteLine("Singleton ServiceA:");
+        Console.WriteLine($"ReferenceEquals: {ReferenceEquals(serviceA1, serviceA2)}"); // true
+        Console.Write("Singleton ServiceA: ");
+        serviceA1.PerformAction(); // Performing action...
+        Console.WriteLine();
 
+        Console.WriteLine("Transient ServiceB:");
+        Console.WriteLine($"ReferenceEquals: {ReferenceEquals(serviceB1, serviceB2)}"); // false
+        Console.Write("Transient ServiceB: ");
+        serviceB1.PerformAction(); // Performing action...
+        Console.ResetColor();
     }
 }
